@@ -84,6 +84,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 				data: response
 			});
 		}
+
 	} catch (error) {
 		console.log(error);
 		return res.status(400).json({
