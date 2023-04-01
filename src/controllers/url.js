@@ -85,7 +85,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
         data: response,
       });
     }
-    const responseFw = await axios.post('/detect-url', { url });
+    const responseFw = await api.post('/detect-url', { url });
 		const { data } = responseFw;
     if (data) {
 			response = await urlService.Create({
