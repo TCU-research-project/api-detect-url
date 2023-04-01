@@ -10,6 +10,10 @@ const urlSchema = new Schema(
 		resultDetection: {
 			type: String,
 			require: true,
+		},
+		review: {
+			type: Number,
+			default: null
 		}
 	},
 	{
