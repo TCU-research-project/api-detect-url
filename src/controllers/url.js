@@ -85,6 +85,12 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 			});
 		}
 		const responseFw = await api.post('/url_check', { url });
+		if (!responseFw) {
+			return res.status(400).json({
+				success: false,
+				message: "Server forwarding has been down"
+			});
+		}
 		const { data } = responseFw;
 		if (data) {
 			response = await urlService.Create({
