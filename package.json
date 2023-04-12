@@ -35,7 +35,8 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "request": "^2.88.2",
-    "request-promise": "^4.2.6"
+    "request-promise": "^4.2.6",
+    "whoiser": "^1.16.0"
   },
   "devDependencies": {
     "morgan": "^1.10.0",

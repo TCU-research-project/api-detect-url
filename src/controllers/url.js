@@ -2,6 +2,7 @@ import express from 'express';
 import { body, query, validationResult } from 'express-validator';
 import cURL from '../services/url';
 import api from '../utils/api';
+import whoiser from 'whoiser';
 
 const router = express.Router();
 
@@ -74,6 +75,8 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 	}
 	const { url } = req.body;
 	try {
+		const whoisResponse = await whoiser(url);
+
 		const urlService = new cURL();
 		let response;
 		response = await urlService.FindOne({ name: url });
@@ -81,7 +84,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 			return res.json({
 				success: true,
 				message: 'Success',
-				data: response,
+				data: { response, whois: whoisResponse['whois.verisign-grs.com'] },
 			});
 		}
 		const responseFw = await api.post('/url_check', { url });
@@ -100,7 +103,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 			return res.json({
 				success: true,
 				message: 'Success',
-				data: response,
+				data: { response, whois: whoisResponse['whois.verisign-grs.com'] },
 			});
 		}
 		return res.status(400).json({
@@ -114,6 +117,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 			message: 'Server error',
 		});
 	}
+
 });
 
 export default router;
