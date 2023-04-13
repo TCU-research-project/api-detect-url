@@ -34,7 +34,7 @@ router.get('/list', async (req, res) => {
 
 		const response = await urlService.Find(query, skip, pageSize, sortQuery);
 
-		if (response.length) {
+		if (response) {
 			const countResponse = await urlService.Count();
 			if (countResponse) {
 				return res.json({
@@ -53,7 +53,7 @@ router.get('/list', async (req, res) => {
 		}
 		return res.status(400).json({
 			success: false,
-			message: 'Not found any record',
+			message: 'Internal error',
 		});
 	} catch (error) {
 		console.log(error);
@@ -75,10 +75,20 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 	}
 	const { url } = req.body;
 	try {
-		const whoisResponse = await whoiser(url);
-
 		const urlService = new cURL();
+		const whoisResponse = await whoiser(url);
+		const whoisData = whoisResponse[[Object.keys(domainInfo)][0]];
 		let response;
+
+
+		if (!whoisData['Domain Status']) {
+			response = await urlService.Create({
+				name: url,
+				resultDetection: 'notFound',
+			});
+
+		}
+
 		response = await urlService.FindOne({ name: url });
 		if (response) {
 			return res.json({
@@ -100,15 +110,21 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 				name: url,
 				resultDetection: data.msg
 			});
-			return res.json({
-				success: true,
-				message: 'Success',
-				data: { response, whois: whoisResponse['whois.verisign-grs.com'] },
+			if (response) {
+				return res.json({
+					success: true,
+					message: 'Success',
+					data: { response, whois: whoisData },
+				});
+			}
+			return res.status(400).json({
+				success: false,
+				message: 'Save record error',
 			});
 		}
 		return res.status(400).json({
 			success: false,
-			message: 'Fail',
+			message: 'Internal error',
 		});
 	} catch (error) {
 		console.log(error);
