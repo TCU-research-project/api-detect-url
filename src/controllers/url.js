@@ -76,17 +76,22 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 	const { url } = req.body;
 	try {
 		const urlService = new cURL();
+		console.log(url);
 		const whoisResponse = await whoiser(url);
-		const whoisData = whoisResponse[[Object.keys(domainInfo)][0]];
+
+		const whoisData = Object.values(whoisResponse)[0];
 		let response;
 
-
-		if (!whoisData['Domain Status']) {
-			response = await urlService.Create({
+		if (!whoisData['Domain Status'].length) {
+			response = await urlService.Upsert({ name: url }, {
 				name: url,
 				resultDetection: 'notFound',
 			});
-
+			return res.json({
+				success: true,
+				message: 'Success',
+				data: { response, whois: whoisData }
+			});
 		}
 
 		response = await urlService.FindOne({ name: url });
@@ -94,7 +99,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 			return res.json({
 				success: true,
 				message: 'Success',
-				data: { response, whois: whoisResponse['whois.verisign-grs.com'] },
+				data: { response, whois: whoisData },
 			});
 		}
 		const responseFw = await api.post('/url_check', { url });
