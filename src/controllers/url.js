@@ -76,60 +76,74 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 	const { url } = req.body;
 	try {
 		const urlService = new cURL();
-		console.log(url);
-		const whoisResponse = await whoiser(url);
+		let urlWhois;
+		if (url.substring(0, 3) === 'www') {
+			urlWhois = url.substring(4);
+		} else {
+			urlWhois = url;
+		}
+		const whoisResponse = await whoiser(urlWhois);
 
 		const whoisData = Object.values(whoisResponse)[0];
-		let response;
 
 		if (!whoisData['Domain Status'].length) {
-			response = await urlService.Upsert({ name: url }, {
-				name: url,
-				resultDetection: 'notFound',
-			});
-			return res.json({
-				success: true,
-				message: 'Success',
-				data: { response, whois: whoisData }
-			});
+			await urlService.Upsert(
+				{ name: urlWhois },
+				{
+					name: urlWhois,
+					notFound: true,
+				},
+			);
+		} else {
+			await urlService.Upsert(
+				{ name: urlWhois },
+				{
+					name: urlWhois,
+					notFound: false,
+				},
+			);
 		}
 
-		response = await urlService.FindOne({ name: url });
-		if (response) {
-			return res.json({
-				success: true,
-				message: 'Success',
-				data: { response, whois: whoisData },
-			});
-		}
-		const responseFw = await api.post('/url_check', { url });
-		if (!responseFw) {
-			return res.status(400).json({
-				success: false,
-				message: "Server forwarding has been down"
-			});
-		}
-		const { data } = responseFw;
-		if (data) {
-			response = await urlService.Create({
-				name: url,
-				resultDetection: data.msg
-			});
-			if (response) {
-				return res.json({
-					success: true,
-					message: 'Success',
-					data: { response, whois: whoisData },
+		const urlExist = await urlService.FindOne({ name: urlWhois });
+		if (!urlExist?.resultDetection) {
+			const responseFw = await api.post('/url_check', { url: urlWhois });
+			if (!responseFw) {
+				return res.status(400).json({
+					success: false,
+					message: 'Server forwarding has been down',
+				});
+			}
+			const { data } = responseFw;
+			if (data) {
+				const response = await urlService.Update(
+					{ name: urlWhois },
+					{
+						name: urlWhois,
+						resultDetection: data.msg,
+					},
+				);
+				if (response) {
+					return res.json({
+						success: true,
+						message: 'Success',
+						data: { response, whois: whoisData },
+					});
+				}
+				return res.status(400).json({
+					success: false,
+					message: 'Save record error',
 				});
 			}
 			return res.status(400).json({
 				success: false,
-				message: 'Save record error',
+				message: 'Internal error',
 			});
+
 		}
-		return res.status(400).json({
-			success: false,
-			message: 'Internal error',
+		return res.json({
+			success: true,
+			message: 'Success',
+			data: { response: urlExist, whois: whoisData },
 		});
 	} catch (error) {
 		console.log(error);
@@ -138,7 +152,6 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 			message: 'Server error',
 		});
 	}
-
 });
 
 export default router;

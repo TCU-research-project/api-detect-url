@@ -7,6 +7,10 @@ const urlSchema = new Schema(
 			type: String,
 			require: true,
 		},
+		notFound: {
+			type: Boolean,
+			require: true,
+		},
 		resultDetection: {
 			type: String,
 			require: true,
