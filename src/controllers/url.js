@@ -64,7 +64,7 @@ router.get('/list', async (req, res) => {
 	}
 });
 
-router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
+router.get('/detect-url', query('url').notEmpty(), async (req, res) => {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		return res.status(400).json({
@@ -73,7 +73,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 			data: null,
 		});
 	}
-	const { url } = req.body;
+	const { url } = req.query;
 	try {
 		const urlService = new cURL();
 		let urlWhois;
@@ -106,7 +106,7 @@ router.post('/detect-url', body('url').notEmpty(), async (req, res) => {
 
 		const urlExist = await urlService.FindOne({ name: urlWhois });
 		if (!urlExist?.resultDetection) {
-			const responseFw = await api.post('/url_check', { url: urlWhois });
+			const responseFw = await api.get(`/url_check?url=${urlWhois}`);
 			if (!responseFw) {
 				return res.status(400).json({
 					success: false,
