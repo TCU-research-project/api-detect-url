@@ -82,24 +82,37 @@ router.get('/detect-url', query('url').notEmpty(), async (req, res) => {
 		} else {
 			urlWhois = url;
 		}
-		const whoisResponse = await whoiser(urlWhois);
 
-		const whoisData = Object.values(whoisResponse)[0];
+		let whoisData;
+		try {
+			const whoisResponse = await whoiser(urlWhois);
 
-		if (!whoisData['Domain Status'].length) {
+			whoisData = Object.values(whoisResponse)[0] || {};
+
+			if (!whoisData['Domain Status'].length) {
+				await urlService.Upsert(
+					{ name: urlWhois },
+					{
+						name: urlWhois,
+						notFound: true,
+					},
+				);
+			} else {
+				await urlService.Upsert(
+					{ name: urlWhois },
+					{
+						name: urlWhois,
+						notFound: false,
+					},
+				);
+			}
+		} catch (error) {
+			console.log(error);
 			await urlService.Upsert(
 				{ name: urlWhois },
 				{
 					name: urlWhois,
 					notFound: true,
-				},
-			);
-		} else {
-			await urlService.Upsert(
-				{ name: urlWhois },
-				{
-					name: urlWhois,
-					notFound: false,
 				},
 			);
 		}
